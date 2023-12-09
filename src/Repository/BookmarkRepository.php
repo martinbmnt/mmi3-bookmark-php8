@@ -21,6 +21,54 @@ class BookmarkRepository extends ServiceEntityRepository
         parent::__construct($registry, Bookmark::class);
     }
 
+    public function add(Bookmark $bookmark, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($bookmark);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Bookmark $bookmark, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($bookmark);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function findLastEntry(): ?Bookmark
+    {
+        return $this->createQueryBuilder('b')
+            ->orderBy('b.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    public function findNextX(int $firstResult = 0, int $step = 10): array
+    {
+        return $this->createQueryBuilder('b')
+            ->orderBy('b.id', 'DESC')
+            ->setFirstResult($firstResult)
+            ->setMaxResults($step)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function countAll(): int
+    {
+        return $this->createQueryBuilder('b')
+            ->select('count(b.id)')
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
+
 //    /**
 //     * @return Bookmark[] Returns an array of Bookmark objects
 //     */
