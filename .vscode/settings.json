@@ -1,0 +1,15 @@
+{
+    "phpcs.composerJsonPath": "~/.config/composer/",
+    "phpcs.standard": "PSR2",
+    "phpcs.ignorePatterns": [
+        "/application/core/",
+        "/application/config/",
+        "/application/third_party/",
+        "/system/",
+        "/vendor/",
+        "/javascript/"
+    ],
+    "simple-php-cs-fixer.rules": "@PSR1, @PSR2",
+    "simple-php-cs-fixer.usingCache": true,
+    "phpcs.errorSeverity": 5,
+}
