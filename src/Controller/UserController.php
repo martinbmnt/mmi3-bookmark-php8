@@ -117,4 +117,36 @@ class UserController extends AbstractController
 
         return $response;
     }
+
+    #[Route('/api/users/{id}', name: 'api_user_item', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function read(
+        ManagerRegistry $managerRegistry,
+        UrlHelper $urlHelper,
+        int $id
+    ): JsonResponse {
+        $response = new JsonResponse();
+        $response->headers->set('Server', 'ExoAPICRUDREST');
+
+        /** @var UserRepository $userRepository */
+        $userRepository = $managerRegistry->getRepository(User::class);
+
+        $user = $userRepository->find($id);
+
+        if (null === $user) {
+            throw $this->createNotFoundException('User not found');
+        }
+
+        $baseUrl = $urlHelper->getAbsoluteUrl($this->generateUrl('api_bookmark_collection'));
+
+        $response->headers->set('Link', "<{$baseUrl}>; rel=\"collection\"", false);
+
+        $response->setVary('Accept');
+
+        $response->setData([
+            'email' => $user->getEmail(),
+            'roles' => $user->getRoles(),
+        ]);
+
+        return $response;
+    }
 }
