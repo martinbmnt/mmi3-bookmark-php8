@@ -38,6 +38,26 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->persist($user);
         $this->getEntityManager()->flush();
     }
+    
+    public function findNextX(int $firstResult = 0, int $step = 10): array
+    {
+        return $this->createQueryBuilder('u')
+        ->orderBy('u.id', 'DESC')
+        ->setFirstResult($firstResult)
+        ->setMaxResults($step)
+        ->getQuery()
+        ->getResult()
+        ;
+    }
+
+    public function countAll(): int
+    {
+        return $this->createQueryBuilder('u')
+            ->select('count(u.id)')
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
 
 //    /**
 //     * @return User[] Returns an array of User objects
