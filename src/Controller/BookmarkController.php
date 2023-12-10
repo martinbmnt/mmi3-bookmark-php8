@@ -91,7 +91,7 @@ class BookmarkController extends AbstractController
         return $response;
     }
 
-    #[Route('/api/bookmark/{id}', name: 'api_bookmark_update', methods: ['PUT'], requirements: ['id' => '\d+'])]
+    #[Route('/api/bookmarks/{id}', name: 'api_bookmark_update', methods: ['PUT'], requirements: ['id' => '\d+'])]
     public function update(
         Request $request,
         ManagerRegistry $doctrine,
@@ -123,7 +123,7 @@ class BookmarkController extends AbstractController
         return $response;
     }
 
-    #[Route('/api/bookmark/{id}', name: 'api_bookmark_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
+    #[Route('/api/bookmarks/{id}', name: 'api_bookmark_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function delete(
         ManagerRegistry $doctrine,
         Bookmark $bookmark
