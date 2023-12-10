@@ -97,6 +97,8 @@ class BookmarkController extends AbstractController
         ManagerRegistry $doctrine,
         Bookmark $bookmark
     ): JsonResponse {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN', null, 'User tried to access a page without having ROLE_ADMIN');
+
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
