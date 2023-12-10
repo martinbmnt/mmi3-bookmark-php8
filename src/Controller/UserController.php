@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\UrlHelper;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 
 class UserController extends AbstractController
 {
@@ -146,6 +147,39 @@ class UserController extends AbstractController
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
         ]);
+
+        return $response;
+    }
+
+    #[Route('/api/users/{id}', name: 'api_user_update', methods: ['PUT'], requirements: ['id' => '\d+'])]
+    public function update(
+        Request $request,
+        ManagerRegistry $managerRegistry,
+        UserPasswordHasherInterface $passwordHasher,
+        User $user
+    ): JsonResponse {
+        $response = new JsonResponse();
+        $response->headers->set('Server', 'ExoAPICRUDREST');
+
+        $email = $request->get('email');
+        $password = $request->get('password');
+        $roles = $request->get('roles', $user->getRoles());
+
+        if (empty($email) || empty($password)) {
+            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing email or password');
+
+            return $response;
+        }
+
+        $entityManager = $managerRegistry->getManager();
+
+        $user->setEmail($email);
+        $user->setPassword($passwordHasher->hashPassword($user, $password));
+        $user->setRoles($roles);
+
+        $entityManager->flush();
+
+        $response->setStatusCode(Response::HTTP_OK, 'User updated');
 
         return $response;
     }
