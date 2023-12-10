@@ -93,7 +93,7 @@ class UserController extends AbstractController
 
         $email = $request->get('email');
         $password = $request->get('password');
-        $roles = $request->get('roles', []);
+        $roles = $request->get('roles', ['ROLE_USER']);
 
         if (empty($email) || empty($password)) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing email or password');
