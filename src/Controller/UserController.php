@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\UrlHelper;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class UserController extends AbstractController
@@ -75,6 +76,44 @@ class UserController extends AbstractController
 
         $response->setData($responseData);
         $response->setStatusCode(Response::HTTP_PARTIAL_CONTENT);
+
+        return $response;
+    }
+
+    #[Route('/api/users', name: 'api_user_create', methods: ['POST'])]
+    public function create(
+        ManagerRegistry $managerRegistry,
+        Request $request,
+        UrlHelper $urlHelper,
+        UserPasswordHasherInterface $passwordHasher
+    ): JsonResponse {
+        $response = new JsonResponse();
+        $response->headers->set('Server', 'ExoAPICRUDREST');
+
+        $email = $request->get('email');
+        $password = $request->get('password');
+        $roles = $request->get('roles', []);
+
+        if (empty($email) || empty($password)) {
+            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing email or password');
+
+            return $response;
+        }
+
+        $entityManager = $managerRegistry->getManager();
+
+        $user = new User();
+        $user->setEmail($email);
+        $user->setPassword($passwordHasher->hashPassword($user, $password));
+        $user->setRoles($roles);
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        $id = $user->getId();
+
+        $response->setStatusCode(Response::HTTP_CREATED);
+        $response->headers->set('Location', $urlHelper->getAbsoluteUrl($this->generateUrl('api_user_item', ['id' => $id])));
 
         return $response;
     }
