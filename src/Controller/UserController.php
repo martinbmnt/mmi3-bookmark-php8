@@ -183,4 +183,24 @@ class UserController extends AbstractController
 
         return $response;
     }
+
+    #[Route('/api/users/{id}', name: 'api_user_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
+    public function delete(
+        ManagerRegistry $managerRegistry,
+        User $user
+    ): JsonResponse {
+        $this->denyAccessUnlessGranted('ROLE_SUPER_ADMIN');
+
+        $response = new JsonResponse();
+        $response->headers->set('Server', 'ExoAPICRUDREST');
+
+        $entityManager = $managerRegistry->getManager();
+
+        $entityManager->remove($user);
+        $entityManager->flush();
+
+        $response->setStatusCode(Response::HTTP_OK, 'User deleted');
+
+        return $response;
+    }
 }
