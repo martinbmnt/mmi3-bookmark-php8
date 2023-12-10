@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Bookmark;
+use App\Repository\BookmarkRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
