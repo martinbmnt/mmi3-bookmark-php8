@@ -91,11 +91,9 @@ class UserController extends AbstractController
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $email = $request->get('email');
-        $password = $request->get('password');
-        $roles = $request->get('roles', ['ROLE_USER']);
+        $data = $this->getJson($request);
 
-        if (empty($email) || empty($password)) {
+        if (empty($data['email']) || empty($data['password'])) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing email or password');
 
             return $response;
@@ -104,9 +102,9 @@ class UserController extends AbstractController
         $entityManager = $managerRegistry->getManager();
 
         $user = new User();
-        $user->setEmail($email);
-        $user->setPassword($passwordHasher->hashPassword($user, $password));
-        $user->setRoles($roles);
+        $user->setEmail($data['email']);
+        $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
+        $user->setRoles(isset($data['roles']) ? json_decode($data['roles']) : ['ROLE_USER']);
 
         $entityManager->persist($user);
         $entityManager->flush();
@@ -161,21 +159,27 @@ class UserController extends AbstractController
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $email = $request->get('email');
-        $password = $request->get('password');
-        $roles = $request->get('roles', $user->getRoles());
+        $data = $this->getJson($request);
 
-        if (empty($email) || empty($password)) {
-            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing email or password');
+        if (empty($data)) {
+            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing data');
 
             return $response;
         }
 
         $entityManager = $managerRegistry->getManager();
 
-        $user->setEmail($email);
-        $user->setPassword($passwordHasher->hashPassword($user, $password));
-        $user->setRoles($roles);
+        if (isset($data['email'])) {
+            $user->setEmail($data['email']);
+        }
+
+        if (isset($data['password'])) {
+            $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
+        }
+
+        if (isset($data['roles'])) {
+            $user->setRoles(json_decode($data['roles']));
+        }
 
         $entityManager->flush();
 
@@ -202,5 +206,16 @@ class UserController extends AbstractController
         $response->setStatusCode(Response::HTTP_OK, 'User deleted');
 
         return $response;
+    }
+
+    private function getJson(Request $request): array
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new \InvalidArgumentException('Invalid JSON');
+        }
+
+        return $data;
     }
 }
