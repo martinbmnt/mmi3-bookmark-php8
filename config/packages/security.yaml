@@ -4,14 +4,27 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        # used to reload user from session & other features (e.g. switch_user)
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+        administrators:
+            memory:
+                users:
+                    myadmin: { password: '$2y$13$RpKYnaQcP9tSFRAk8/1JsOW3zshBnYki/aVYXeNvDLYJYp.54kmwC', roles: 'ROLE_ADMIN' }
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
             lazy: true
-            provider: users_in_memory
+            provider: app_user_provider
+            json_login:
+                check_path: api_login
+            logout:
+                path: api_logout
+                target: api_me
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -22,8 +35,13 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/api/users, roles: ROLE_ADMIN }
+        # - { path: ^/admin/users, roles: ROLE_SUPER_ADMIN }
+        - { path: ^/api/bookmarks/\d+$, methods: [DELETE], roles: ROLE_ADMIN }
+
+    role_hierarchy:
+        ROLE_ADMIN:       ROLE_USER
+        ROLE_SUPER_ADMIN: ROLE_ADMIN
 
 when@test:
     security:
