@@ -12,10 +12,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\UrlHelper;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 
 class UserController extends AbstractController
 {
+    use ControllerTrait;
+
     #[Route('/api/users', name: 'api_user_collection', methods: ['GET'], priority: 2)]
     #[Route('/api/users/pages/{page}', name: 'api_user_collection_page', methods: ['GET'], requirements: ['page' => '\d+'])]
     #[Route('/api/users/pages/{page}/{step}', name: 'api_user_collection_page_step', methods: ['GET'], requirements: ['page' => '\d+', 'step' => '\d+'], defaults: ['page' => 1])]
@@ -91,7 +92,7 @@ class UserController extends AbstractController
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $data = $this->getJson($request);
+        $data = $this->getRequestData($request);
 
         if (empty($data['email']) || empty($data['password'])) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing email or password');
@@ -159,7 +160,7 @@ class UserController extends AbstractController
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $data = $this->getJson($request);
+        $data = $this->getRequestData($request);
 
         if (empty($data)) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing data');
@@ -206,16 +207,5 @@ class UserController extends AbstractController
         $response->setStatusCode(Response::HTTP_OK, 'User deleted');
 
         return $response;
-    }
-
-    private function getJson(Request $request): array
-    {
-        $data = json_decode($request->getContent(), true);
-
-        if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \InvalidArgumentException('Invalid JSON');
-        }
-
-        return $data;
     }
 }

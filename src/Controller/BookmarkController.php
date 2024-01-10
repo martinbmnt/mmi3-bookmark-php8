@@ -14,6 +14,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class BookmarkController extends AbstractController
 {
+    use ControllerTrait;
+
     #[Route('/api/bookmarks', name: 'api_bookmark_create', methods: ['POST'])]
     public function create(
         ManagerRegistry $doctrine,
@@ -23,9 +25,11 @@ class BookmarkController extends AbstractController
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $name = $request->get('name');
-        $url = $request->get('url');
-        $description = $request->get('description');
+        $data = $this->getRequestData($request);
+
+        $name = $data['name'] ?? '';
+        $url = $data['url'] ?? '';
+        $description = $data['description'] ?? '';
 
         if (empty($name) || empty($url)) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'url and name must not be empty');
@@ -103,9 +107,11 @@ class BookmarkController extends AbstractController
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $name = $request->get('name');
-        $url = $request->get('url');
-        $description = $request->get('description');
+        $data = $this->getRequestData($request);
+
+        $name = $data['name'] ?? '';
+        $url = $data['url'] ?? '';
+        $description = $data['description'] ?? '';
 
         if (empty($name) || empty($url)) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'url and name must not be empty');
