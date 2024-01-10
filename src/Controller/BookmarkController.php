@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\UrlHelper;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\ConstraintViolationInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class BookmarkController extends AbstractController
 {
@@ -20,29 +22,39 @@ class BookmarkController extends AbstractController
     public function create(
         ManagerRegistry $doctrine,
         Request $request,
-        UrlHelper $urlHelper
+        UrlHelper $urlHelper,
+        ValidatorInterface $validator
     ): JsonResponse {
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
         $data = $this->getRequestData($request);
 
-        $name = $data['name'] ?? '';
-        $url = $data['url'] ?? '';
-        $description = $data['description'] ?? '';
+        $bookmark = new Bookmark();
+        $bookmark->setName($data['name'] ?? '');
+        $bookmark->setUrl($data['url'] ?? '');
+        $bookmark->setDescription($data['description'] ?? '');
 
-        if (empty($name) || empty($url)) {
-            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'url and name must not be empty');
+        $errors = $validator->validate($bookmark);
+
+        if (count($errors) > 0) {
+            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Validation error');
+
+            $errorMessages = [];
+
+            /** @var ConstraintViolationInterface $error */
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+
+            $response->setData([
+                'errors' => $errorMessages,
+            ]);
 
             return $response;
         }
 
         $entityManager = $doctrine->getManager();
-
-        $bookmark = new Bookmark();
-        $bookmark->setName($name);
-        $bookmark->setUrl($url);
-        $bookmark->setDescription($description);
 
         $entityManager->persist($bookmark);
         $entityManager->flush();
@@ -100,6 +112,7 @@ class BookmarkController extends AbstractController
     public function update(
         Request $request,
         ManagerRegistry $doctrine,
+        ValidatorInterface $validator,
         Bookmark $bookmark
     ): JsonResponse {
         $this->denyAccessUnlessGranted('ROLE_ADMIN', null, 'User tried to access a page without having ROLE_ADMIN');
@@ -108,23 +121,39 @@ class BookmarkController extends AbstractController
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
         $data = $this->getRequestData($request);
+        
+        if (isset($data['name'])) {
+            $bookmark->setName($data['name']);
+        }
+        
+        if (isset($data['url'])) {
+            $bookmark->setUrl($data['url']);
+        }
 
-        $name = $data['name'] ?? '';
-        $url = $data['url'] ?? '';
-        $description = $data['description'] ?? '';
+        if (array_key_exists('description', $data)) {
+            $bookmark->setDescription($data['description'] ?? '');
+        }
 
-        if (empty($name) || empty($url)) {
-            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'url and name must not be empty');
+        $errors = $validator->validate($bookmark);
+
+        if (count($errors) > 0) {
+            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Validation error');
+
+            $errorMessages = [];
+
+            /** @var ConstraintViolationInterface $error */
+            foreach ($errors as $error) {
+                $errorMessages[] = $error->getMessage();
+            }
+
+            $response->setData([
+                'errors' => $errorMessages,
+            ]);
 
             return $response;
         }
 
         $entityManager = $doctrine->getManager();
-
-        $bookmark->setName($name);
-        $bookmark->setUrl($url);
-        $bookmark->setDescription($description);
-
         $entityManager->flush();
 
         $response->setStatusCode(Response::HTTP_OK, 'Bookmark updated');

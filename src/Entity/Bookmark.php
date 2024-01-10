@@ -32,8 +32,8 @@ class Bookmark
     #[Assert\Length(
         min: 3,
         max: 255,
-        minMessage: "Field 'name' must be at least {{ limit }} characters long",
-        maxMessage: "Field 'name' cannot be longer than {{ limit }} characters"
+        minMessage: "Field 'url' must be at least {{ limit }} characters long",
+        maxMessage: "Field 'url' cannot be longer than {{ limit }} characters"
     )]
     private ?string $url = null;
 
