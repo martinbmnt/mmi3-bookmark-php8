@@ -26,7 +26,7 @@ class Bookmark
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $description = null;
+    private ?string $description = '';
 
     #[ORM\Column(length: 255)]
     #[Assert\Length(
@@ -59,9 +59,9 @@ class Bookmark
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
-        $this->description = $description;
+        $this->description = $description ?? '';
 
         return $this;
     }

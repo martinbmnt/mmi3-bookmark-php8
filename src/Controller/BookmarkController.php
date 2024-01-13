@@ -6,6 +6,7 @@ use App\Entity\Bookmark;
 use App\Repository\BookmarkRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,37 +23,34 @@ class BookmarkController extends AbstractController
     public function create(
         ManagerRegistry $doctrine,
         Request $request,
-        UrlHelper $urlHelper,
-        ValidatorInterface $validator
+        UrlHelper $urlHelper
     ): JsonResponse {
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
         $data = $this->getRequestData($request);
+        $form = $this->createBookmarkForm(new Bookmark());
 
-        $bookmark = new Bookmark();
-        $bookmark->setName($data['name'] ?? '');
-        $bookmark->setUrl($data['url'] ?? '');
-        $bookmark->setDescription($data['description'] ?? '');
+        $form->submit($data);
 
-        $errors = $validator->validate($bookmark);
-
-        if (count($errors) > 0) {
+        if (!$form->isValid()) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Validation error');
 
             $errorMessages = [];
 
-            /** @var ConstraintViolationInterface $error */
-            foreach ($errors as $error) {
+            foreach ($form->getErrors(true) as $error) {
                 $errorMessages[] = $error->getMessage();
             }
 
             $response->setData([
-                'errors' => $errorMessages,
+                'form_errors' => $errorMessages,
             ]);
 
             return $response;
         }
+
+        /** @var Bookmark $bookmark */
+        $bookmark = $form->getData();
 
         $entityManager = $doctrine->getManager();
 
@@ -244,5 +242,18 @@ class BookmarkController extends AbstractController
         $response->setStatusCode(Response::HTTP_PARTIAL_CONTENT);
 
         return $response;
+    }
+
+    private function createBookmarkForm(Bookmark $bookmark): FormInterface
+    {
+        return $this
+            ->createFormBuilder($bookmark, [
+                'csrf_protection' => false,
+                'data_class' => Bookmark::class,
+            ])
+            ->add('name')
+            ->add('url')
+            ->add('description')
+            ->getForm();
     }
 }
