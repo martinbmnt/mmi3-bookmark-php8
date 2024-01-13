@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Model\UserDto;
 use App\Repository\UserRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -10,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\UrlHelper;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -82,31 +84,25 @@ class UserController extends AbstractController
         return $response;
     }
 
-    #[Route('/api/users', name: 'api_user_create', methods: ['POST'])]
+    #[Route('/api/users', name: 'api_user_create', methods: ['POST'], format: 'json')]
     public function create(
+        #[MapRequestPayload(
+            validationFailedStatusCode: Response::HTTP_BAD_REQUEST,
+            validationGroups: ['Default', 'create']
+        )] UserDto $userDto,
         ManagerRegistry $managerRegistry,
-        Request $request,
         UrlHelper $urlHelper,
         UserPasswordHasherInterface $passwordHasher
     ): JsonResponse {
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $data = $this->getRequestData($request);
-
-        if (empty($data['email']) || empty($data['password'])) {
-            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing email or password');
-
-            return $response;
-        }
+        $user = new User();
+        $user->setEmail($userDto->email);
+        $user->setPassword($passwordHasher->hashPassword($user, $userDto->password));
+        $user->setRoles($userDto->roles);
 
         $entityManager = $managerRegistry->getManager();
-
-        $user = new User();
-        $user->setEmail($data['email']);
-        $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
-        $user->setRoles(isset($data['roles']) ? json_decode($data['roles']) : ['ROLE_USER']);
-
         $entityManager->persist($user);
         $entityManager->flush();
 
