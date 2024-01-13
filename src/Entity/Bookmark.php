@@ -26,6 +26,10 @@ class Bookmark
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\Length(
+        max: 10_000,
+        maxMessage: "Field 'description' cannot be longer than {{ limit }} characters"
+    )]
     private ?string $description = '';
 
     #[ORM\Column(length: 255)]
