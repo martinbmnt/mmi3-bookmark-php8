@@ -29,12 +29,14 @@ class Bookmark
     private ?string $description = '';
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Field 'url' is required and cannot be empty")]
     #[Assert\Length(
         min: 3,
         max: 255,
         minMessage: "Field 'url' must be at least {{ limit }} characters long",
         maxMessage: "Field 'url' cannot be longer than {{ limit }} characters"
     )]
+    #[Assert\Url(message: "Field 'url' must be a valid URL")]
     private ?string $url = null;
 
     public function getId(): ?int
