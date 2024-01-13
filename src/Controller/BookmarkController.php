@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Bookmark;
+use App\Form\BookmarkType;
 use App\Repository\BookmarkRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,8 +13,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\UrlHelper;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Validator\ConstraintViolationInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class BookmarkController extends AbstractController
 {
@@ -110,7 +109,6 @@ class BookmarkController extends AbstractController
     public function update(
         Request $request,
         ManagerRegistry $doctrine,
-        ValidatorInterface $validator,
         Bookmark $bookmark
     ): JsonResponse {
         $this->denyAccessUnlessGranted('ROLE_ADMIN', null, 'User tried to access a page without having ROLE_ADMIN');
@@ -118,34 +116,26 @@ class BookmarkController extends AbstractController
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $data = $this->getRequestData($request);
+        $form = $this->createForm(BookmarkType::class, $bookmark, [
+            'csrf_protection' => false,
+        ]);
+
+        // Set default data from current bookmark
+        $form->setData($bookmark);
+
+        $form->submit($this->getRequestData($request), false);
         
-        if (isset($data['name'])) {
-            $bookmark->setName($data['name']);
-        }
-        
-        if (isset($data['url'])) {
-            $bookmark->setUrl($data['url']);
-        }
-
-        if (array_key_exists('description', $data)) {
-            $bookmark->setDescription($data['description'] ?? '');
-        }
-
-        $errors = $validator->validate($bookmark);
-
-        if (count($errors) > 0) {
+        if (!$form->isValid()) {
             $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Validation error');
 
             $errorMessages = [];
 
-            /** @var ConstraintViolationInterface $error */
-            foreach ($errors as $error) {
+            foreach ($form->getErrors(true) as $error) {
                 $errorMessages[] = $error->getMessage();
             }
 
             $response->setData([
-                'errors' => $errorMessages,
+                'form_errors' => $errorMessages,
             ]);
 
             return $response;
