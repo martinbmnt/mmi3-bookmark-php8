@@ -146,38 +146,31 @@ class UserController extends AbstractController
         return $response;
     }
 
-    #[Route('/api/users/{id}', name: 'api_user_update', methods: ['PUT'], requirements: ['id' => '\d+'])]
+    #[Route('/api/users/{id}', name: 'api_user_update', methods: ['PUT'], requirements: ['id' => '\d+'], format: 'json')]
     public function update(
-        Request $request,
+        #[MapRequestPayload(
+            validationFailedStatusCode: Response::HTTP_BAD_REQUEST
+        )] UserDto $userDto,
+        User $user,
         ManagerRegistry $managerRegistry,
-        UserPasswordHasherInterface $passwordHasher,
-        User $user
+        UserPasswordHasherInterface $passwordHasher
     ): JsonResponse {
         $response = new JsonResponse();
         $response->headers->set('Server', 'ExoAPICRUDREST');
 
-        $data = $this->getRequestData($request);
-
-        if (empty($data)) {
-            $response->setStatusCode(Response::HTTP_BAD_REQUEST, 'Missing data');
-
-            return $response;
+        if ($userDto->email) {
+            $user->setEmail($userDto->email);
+        }
+        
+        if ($userDto->password) {
+            $user->setPassword($passwordHasher->hashPassword($user, $userDto->password));
+        }
+        
+        if ($userDto->roles) {
+            $user->setRoles($userDto->roles);
         }
 
         $entityManager = $managerRegistry->getManager();
-
-        if (isset($data['email'])) {
-            $user->setEmail($data['email']);
-        }
-
-        if (isset($data['password'])) {
-            $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
-        }
-
-        if (isset($data['roles'])) {
-            $user->setRoles(json_decode($data['roles']));
-        }
-
         $entityManager->flush();
 
         $response->setStatusCode(Response::HTTP_OK, 'User updated');
