@@ -20,7 +20,13 @@ final class UserDto
             groups: ["create"]
         )]
         public readonly ?string $password = null,
-        public readonly ?array $roles = ["ROLE_USER"],
+        public ?array $roles = null,
     ) {
+    }
+
+    #[Assert\Callback(groups: ["create"])]
+    public function setDefaultRoles(): void
+    {
+        $this->roles = $this->roles ?: ["ROLE_USER"];
     }
 }
